@@ -1,0 +1,282 @@
+.data
+matrix: .space 1600
+rezultat: .space 1600
+index_linie: .long 1
+index_coloana: .long 1
+m: .space 4
+n: .space 4
+celule: .space 4
+i: .space 4
+j: .space 4
+k: .space 4
+linie_minus: .space 4
+linie_plus: .space 4
+coloana_minus: .space 4
+coloana_plus: .space 4
+index_k: .long 0
+index: .long 0
+scan: .asciz "%d"
+fs: .asciz "%ld "
+newline: .asciz "\n"
+.text
+.global main
+main:
+lea matrix, %esi
+lea rezultat, %edi
+
+citire:
+pushl $m
+pushl $scan
+call scanf
+add $8, %esp
+
+addl $2, m
+
+pushl $n
+pushl $scan
+call scanf
+add $8, %esp
+
+addl $2, n
+
+pushl $celule
+pushl $scan
+call scanf
+add $8, %esp
+
+movl $0, index
+et_for:
+mov index, %ecx
+cmp %ecx, celule
+je iesire_for
+
+mov index, %ebx
+inc %ebx
+
+push $i
+push $scan
+call scanf
+add $8, %esp
+
+incl i
+
+push $j
+push $scan
+call scanf
+add $8, %esp
+
+incl j
+
+mov n, %eax
+mov $0, %edx
+mull i
+addl j, %eax
+#eax = nrcoloane * i + j
+movl $1, (%esi, %eax, 4)
+movl $1, (%edi, %eax, 4)
+incl index
+jmp et_for
+
+iesire_for:
+push $k
+push $scan
+call scanf
+add $8, %esp
+prelucrare_matrice:
+jmp evolutii
+linie:
+mov index_linie, %eax
+incl %eax
+cmp m, %eax
+je evolutii
+	coloana:
+	mov index_coloana, %eax
+	incl %eax
+	cmp n, %eax
+	je linia_urmatoare_prelucrare
+	mov index_linie, %eax
+	dec %eax
+	mov %eax, linie_minus
+	addl $2, %eax
+	mov %eax, linie_plus
+	mov index_coloana, %eax
+	dec %eax
+	mov %eax, coloana_minus
+	addl $2, %eax
+	mov %eax, coloana_plus
+	mov $0, %ebx # in ebx o sa numar cati vecini are celula curenta
+
+	vecin1:
+	mov n, %eax
+	mull linie_minus
+	addl coloana_minus, %eax  #eax = n * linie_minus + coloana_minus, adica vecinul din stanga sus
+	mov (%esi, %eax, 4), %ecx
+	add %ecx, %ebx
+
+	vecin2:
+        mov n, %eax
+        mull linie_minus
+        addl index_coloana, %eax  #eax = n * linie_minus + index_coloana, adica vecinul de sus
+        mov (%esi, %eax, 4), %ecx
+	add %ecx, %ebx
+
+	vecin3:
+        mov n, %eax
+        mull linie_minus
+        addl coloana_plus, %eax  #eax = n * linie_minus + coloana_plus, adica vecinul din dreapta sus
+        mov (%esi, %eax, 4), %ecx
+	add %ecx, %ebx
+
+	vecin4:
+        mov n, %eax
+        mull index_linie
+        addl coloana_plus, %eax  #eax = n * index_linie + coloana_plus, adica vecinul din dreapta
+        mov (%esi, %eax, 4), %ecx
+	add %ecx, %ebx
+
+	vecin5:
+        mov n, %eax
+        mull linie_plus
+        addl coloana_plus, %eax  #eax = n * linie_plus + coloana_plus, adica vecinul din dreapta jos
+        mov (%esi, %eax, 4), %ecx
+	add %ecx, %ebx
+
+	vecin6:
+        mov n, %eax
+        mull linie_plus
+        addl index_coloana, %eax  #eax = n * linie_plus + index_coloana, adica vecinul de jos
+        mov (%esi, %eax, 4), %ecx
+	add %ecx, %ebx
+
+	vecin7:
+        mov n, %eax
+        mull linie_plus
+        addl coloana_minus, %eax  #eax = n * linie_plus + coloana_minus, adica vecinul din stanga jos
+        mov (%esi, %eax, 4), %ecx
+	add %ecx, %ebx
+
+	vecin8:
+        mov n, %eax
+        mull index_linie
+        addl coloana_minus, %eax  #eax = n * index_linie + coloana_minus, adica vecinul din stanga
+        mov (%esi, %eax, 4), %ecx
+	add %ecx, %ebx
+
+	evaluare_celula:
+	cmp $2, %ebx
+	jl celula_moare
+
+	cmp $3, %ebx
+	jg celula_moare
+
+	cmp $3, %ebx
+	je celula_traieste
+
+	continuare:
+	incl index_coloana
+	jmp coloana
+
+evolutii:
+mov k, %eax
+cmp index_k, %eax
+je iesire_prelucrare
+incl index_k
+movl $1, index_linie
+movl $1, index_coloana
+egalare_matrice:
+mov m, %eax
+dec %eax
+cmp index_linie, %eax
+je egalare_terminata
+	egalare_coloana:
+	mov n, %eax
+	dec %eax
+	cmp index_coloana, %eax
+	je linia_urmatoare_egalare
+	mov n, %eax
+	mull index_linie
+	addl index_coloana, %eax
+	mov (%edi, %eax, 4), %ebx
+	mov %ebx, (%esi, %eax, 4)
+	incl index_coloana
+	jmp egalare_coloana
+
+egalare_terminata:
+movl $1, index_linie
+movl $1, index_coloana
+jmp linie
+
+iesire_prelucrare:
+movl $1, index_linie
+movl $1, index_coloana
+afisare_linie:
+mov index_linie, %eax
+incl %eax
+cmp m, %eax
+je exit
+        afisare_coloana:
+        mov index_coloana, %ebx
+	incl %ebx
+        cmp n, %ebx
+
+        je linia_urmatoare
+        # nrcoloane * linia + index coloana
+        mov n, %eax
+        mull index_linie
+        addl index_coloana, %eax
+        #eax = nrcoloane * index_linie + index_coloana
+        mov (%edi, %eax, 4), %edx
+
+	push %edx
+        push $fs
+        call printf
+        add $8, %esp
+
+        push $0
+        call fflush
+        add $4, %esp
+
+	incl index_coloana
+        jmp afisare_coloana
+exit:
+mov $1, %eax
+mov $0, %ebx
+int $0x80
+
+linia_urmatoare:
+mov $4, %eax
+mov $1, %ebx
+mov $newline, %ecx
+mov $1, %edx
+int $0x80
+
+incl index_linie
+mov $1, %eax
+mov %eax, index_coloana
+jmp afisare_linie
+
+linia_urmatoare_prelucrare:
+incl index_linie
+mov $1, %eax
+mov %eax, index_coloana
+jmp linie
+
+linia_urmatoare_egalare:
+incl index_linie
+mov $1, %eax
+mov %eax, index_coloana
+jmp egalare_matrice
+
+celula_moare:
+movl n, %eax
+mull index_linie
+addl index_coloana, %eax
+movl $0, (%edi, %eax, 4)
+jmp continuare
+
+celula_traieste:
+movl n, %eax
+mull index_linie
+addl index_coloana, %eax
+movl $1, (%edi, %eax, 4)
+jmp continuare
